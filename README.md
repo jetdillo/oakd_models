@@ -9,6 +9,8 @@ You should be able to just drop this into an existing URDF as a xacro macro.
 Go check out [Tenacity](https://github.com/jetdillo/tenacity_rover) if you need an example of how to do that. 
 If you don't know how to work with XACRO The [ROS Wiki](wiki.ros.org) has a good [tutorial](http://wiki.ros.org/urdf/Tutorials/Using%20Xacro%20to%20Clean%20Up%20a%20URDF%20File) on the subject. 
 
-This is an initial release of this model, so I'm open to feedback, bugs, PRs, etc. 
+This is an initial release of this model, so there might be bugs, inefficiencies, parameters that could be better specified, etc. 
+I'm open to feedback, bugs, PRs, etc. 
+
 Thanks,
 ----Steve " 'dillo" Okay
