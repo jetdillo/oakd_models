@@ -13,7 +13,7 @@
           <visual>
               <origin rpy="0 0 0" xyz="0 0 0" />
               <geometry>
-                      <mesh filename="package://oakd_description/meshes/OAK-D.dae" />
+                      <mesh filename="package://tenacity_description/meshes/sensors/OAK-D.dae" />
               </geometry>
                <material name="black" />
           </visual>
@@ -31,7 +31,8 @@
       
       <!-- Add dummy joint for camera_optical_frame to link back to base_link -->
 
-        <joint name="camera_optical_joint" type="fixed">
+      <joint name="camera_optical_joint" type="fixed">
+      <!-- Point cloud frustrum is 90 degrees off from visual frame --> 
            <origin rpy="-1.57079632769 0 -1.570796332769" xyz="0 0 0" />
 	   <parent link="oakd_${mount_point}" />
 	   <child link="camera_optical_frame" />
@@ -44,7 +45,25 @@
 	  <origin xyz="0 0 0" />
 	  <inertia ixx="0.0001" ixy="0.0" ixz="0.0" iyy="0.0001" iyz="0.0" izz="0.0001" />
           </inertial>
-          </link>
+  </link>
+
+  <!-- Dummy joints for rgb camera to link back to base_link --> 
+        <joint name="camera_rgb_optical_joint" type="fixed">
+           <origin rpy="0 0 0" xyz="0 0 0" />
+	   <parent link="oakd_${mount_point}" />
+	   <child link="camera_rgb_optical_frame" />
+	</joint> 
+
+	<!-- Add dummy link for camera_optical_frame to link back to base_link -->
+        <link name="camera_rgb_optical_frame">
+        <inertial>
+	  <mass value="0.001" />
+	  <origin xyz="0 0 0" />
+	  <inertia ixx="0.0001" ixy="0.0" ixz="0.0" iyy="0.0001" iyz="0.0" izz="0.0001" />
+          </inertial>
+  </link>
+
+  <!-- Gazebo plugin for greyscale left/right stereo pairs -->
 
       <gazebo reference="oakd_${mount_point}">
     <material>Gazebo/DarkGrey</material>
@@ -104,6 +123,57 @@
       </plugin>
     </sensor>
   </gazebo> 
+
+ <!-- Gazebo plugin for center RGB camera -->
+
+   <gazebo reference="oakd_${mount_point}">
+      <material>Gazebo/White</material>
+      <sensor type="camera" name="oakd_rgb_${mount_point}">
+      <update_rate>30.0</update_rate>
+      <camera name="head">
+        <horizontal_fov>1.3962634</horizontal_fov>
+        <image>
+          <width>800</width>
+          <height>800</height>
+          <format>R8G8B8</format>
+        </image>
+        <clip>
+          <near>0.02</near>
+          <far>300</far>
+        </clip>
+        <noise>
+          <type>gaussian</type>
+          <!-- Noise is sampled independently per pixel on each frame.
+               That pixel's noise value is added to each of its color
+               channels, which at that point lie in the range [0,1]. -->
+          <mean>0.0</mean>
+          <stddev>0.007</stddev>
+        </noise>
+      </camera>
+      <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
+        <alwaysOn>true</alwaysOn>
+        <updateRate>0.0</updateRate>
+        <cameraName>oakd_rgb_${mount_point}</cameraName>
+        <imageTopicName>image_raw</imageTopicName>
+        <cameraInfoTopicName>camera_info</cameraInfoTopicName>
+        <frameName>camera_rgb_link_optical</frameName>
+        <!-- setting hackBaseline to anything but 0.0 will cause a misalignment
+            between the gazebo sensor image and the frame it is supposed to
+            be attached to -->
+        <hackBaseline>0.0</hackBaseline>
+        <distortionK1>0.0</distortionK1>
+        <distortionK2>0.0</distortionK2>
+        <distortionK3>0.0</distortionK3>
+        <distortionT1>0.0</distortionT1>
+        <distortionT2>0.0</distortionT2>
+        <CxPrime>0</CxPrime>
+        <Cx>0.0</Cx>
+        <Cy>0.0</Cy>
+        <focalLength>0.0</focalLength>
+      </plugin>
+    </sensor>
+  </gazebo>
+
       <gazebo reference="oakd_joint_${mount_point}">
           <!-- <disableFixedJointLumping>true</disableFixedJointLumping>  -->
           <!-- <preserveFixedJoint>true</preserveFixedJoint> -->
