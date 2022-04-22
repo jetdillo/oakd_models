@@ -13,7 +13,7 @@
           <visual>
               <origin rpy="0 0 0" xyz="0 0 0" />
               <geometry>
-                      <mesh filename="package://tenacity_description/meshes/sensors/OAK-D.dae" />
+                      <mesh filename="package://oakd_description/meshes/sensors/OAK-D.dae" />
               </geometry>
                <material name="black" />
           </visual>
