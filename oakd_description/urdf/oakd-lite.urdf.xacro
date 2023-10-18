@@ -1,0 +1,194 @@
+<?xml version="1.0" ?>
+
+<!--  xacro macros for oakd_lite mount -->
+<robot name="oakd_lite" xmlns:xacro="http://ros.org/wiki/xacro">
+      <xacro:macro name="oakd_lite_link" params="mount_point">
+      <xacro:property name="oakd_length" value="0.091" />
+      <xacro:property name="oakd_width" value="0.028" />
+      <xacro:property name="oakd_depth" value="0.0175" />
+      <xacro:property name="oakd_mass" value="0.061" />
+
+      <link name="oakd_lite_${mount_point}">
+             <pose>0.0 0.0 0.0 0.0 0.0 0.0</pose>
+          <visual>
+              <origin rpy="0 0 0" xyz="0 0 0" />
+              <geometry>
+                      <mesh filename="package://oakd_description/meshes/sensors/OAK-D-LITE.dae" />
+              </geometry>
+               <material name="black" />
+          </visual>
+          <collision>
+              <origin rpy="0 0 0" xyz="0 0 0" />
+              <geometry>
+                  <box size="${oakd_length} ${oakd_width} ${oakd_depth}"/>
+              </geometry>
+          </collision>
+          <xacro:solid_cuboid_inertial
+              rpy="0 0 0" xyz="0 0 0"
+              mass="${oakd_mass}"
+              x="${oakd_length}" y="${oakd_width}" z="${oakd_depth}" />
+      </link>
+      
+      <!-- Add dummy joint for camera_optical_frame to link back to base_link -->
+
+      <joint name="camera_optical_joint" type="fixed">
+      <!-- Point cloud frustrum is 90 degrees off from visual frame --> 
+           <origin rpy="-1.57079632769 0 -1.570796332769" xyz="0 0 0" />
+	   <parent link="oakd_lite_${mount_point}" />
+	   <child link="camera_optical_frame" />
+	</joint> 
+
+	<!-- Add dummy link for camera_optical_frame to link back to base_link -->
+        <link name="camera_optical_frame">
+        <inertial>
+	  <mass value="0.001" />
+	  <origin xyz="0 0 0" />
+	  <inertia ixx="0.0001" ixy="0.0" ixz="0.0" iyy="0.0001" iyz="0.0" izz="0.0001" />
+          </inertial>
+  </link>
+
+  <!-- Dummy joints for rgb camera to link back to base_link --> 
+        <joint name="camera_rgb_optical_joint" type="fixed">
+           <origin rpy="0 0 0" xyz="0 0 0" />
+	   <parent link="oakd_lite_${mount_point}" />
+	   <child link="camera_rgb_optical_frame" />
+	</joint> 
+
+	<!-- Add dummy link for camera_optical_frame to link back to base_link -->
+        <link name="camera_rgb_optical_frame">
+        <inertial>
+	  <mass value="0.001" />
+	  <origin xyz="0 0 0" />
+	  <inertia ixx="0.0001" ixy="0.0" ixz="0.0" iyy="0.0001" iyz="0.0" izz="0.0001" />
+          </inertial>
+  </link>
+
+  <!-- Gazebo plugin for greyscale left/right stereo pairs -->
+
+      <gazebo reference="oakd_lite_${mount_point}">
+    <material>Gazebo/DarkGrey</material>
+    <sensor type="multicamera" name="stereo_camera">
+      <update_rate>30.0</update_rate>
+      <camera name="left">
+        <horizontal_fov>1.2566</horizontal_fov>
+        <image>
+          <width>1200</width>
+          <height>800</height>
+	  <format>L8</format> 
+	  <!--   <format>R8G8B8</format> -->
+        </image>
+        <clip>
+          <near>0.3</near>
+          <far>35</far>
+        </clip>
+        <noise>
+          <type>gaussian</type>
+          <mean>0.0</mean>
+          <stddev>0.007</stddev>
+        </noise>
+      </camera>
+      <camera name="right">
+        <pose>0 -0.07 0 0 0 0</pose>
+        <horizontal_fov>1.1.2566</horizontal_fov>
+        <image>
+          <width>1200</width>
+          <height>800</height>
+	  <format>L8</format> 
+	  <!--   <format>R8G8B8</format> -->
+        </image>
+        <clip>
+          <near>0.3</near>
+          <far>35</far>
+        </clip>
+        <noise>
+          <type>gaussian</type>
+          <mean>0.0</mean>
+          <stddev>0.007</stddev>
+        </noise>
+      </camera>
+      <plugin name="stereo_camera_controller" filename="libgazebo_ros_multicamera.so">
+        <alwaysOn>true</alwaysOn>
+        <updateRate>0.0</updateRate>
+	<cameraName>oakd_lite_${mount_point}/camera</cameraName>
+        <imageTopicName>image_raw</imageTopicName>
+        <cameraInfoTopicName>camera_info</cameraInfoTopicName>
+	<frameName>camera_optical_frame</frameName>
+        <!--<rightFrameName>right_camera_optical_frame</rightFrameName>-->
+        <hackBaseline>0.075</hackBaseline>
+        <distortionK1>0.0</distortionK1>
+        <distortionK2>0.0</distortionK2>
+        <distortionK3>0.0</distortionK3>
+        <distortionT1>0.0</distortionT1>
+        <distortionT2>0.0</distortionT2>
+      </plugin>
+    </sensor>
+  </gazebo> 
+
+ <!-- Gazebo plugin for center RGB camera -->
+
+   <gazebo reference="oakd_lite_${mount_point}">
+      <material>Gazebo/White</material>
+      <sensor type="camera" name="oakd_lite_rgb_${mount_point}">
+      <update_rate>30.0</update_rate>
+      <camera name="head">
+        <horizontal_fov>1.3962634</horizontal_fov>
+        <image>
+          <width>800</width>
+          <height>800</height>
+          <format>R8G8B8</format>
+        </image>
+        <clip>
+          <near>0.02</near>
+          <far>300</far>
+        </clip>
+        <noise>
+          <type>gaussian</type>
+          <!-- Noise is sampled independently per pixel on each frame.
+               That pixel's noise value is added to each of its color
+               channels, which at that point lie in the range [0,1]. -->
+          <mean>0.0</mean>
+          <stddev>0.007</stddev>
+        </noise>
+      </camera>
+      <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
+        <alwaysOn>true</alwaysOn>
+        <updateRate>0.0</updateRate>
+        <cameraName>oakd_lite_rgb_${mount_point}</cameraName>
+        <imageTopicName>image_raw</imageTopicName>
+        <cameraInfoTopicName>camera_info</cameraInfoTopicName>
+        <frameName>camera_rgb_link_optical</frameName>
+        <!-- setting hackBaseline to anything but 0.0 will cause a misalignment
+            between the gazebo sensor image and the frame it is supposed to
+            be attached to -->
+        <hackBaseline>0.0</hackBaseline>
+        <distortionK1>0.0</distortionK1>
+        <distortionK2>0.0</distortionK2>
+        <distortionK3>0.0</distortionK3>
+        <distortionT1>0.0</distortionT1>
+        <distortionT2>0.0</distortionT2>
+        <CxPrime>0</CxPrime>
+        <Cx>0.0</Cx>
+        <Cy>0.0</Cy>
+        <focalLength>0.0</focalLength>
+      </plugin>
+    </sensor>
+  </gazebo>
+
+      <gazebo reference="oakd_lite_joint_${mount_point}">
+          <!-- <disableFixedJointLumping>true</disableFixedJointLumping>  -->
+          <!-- <preserveFixedJoint>true</preserveFixedJoint> -->
+      </gazebo>
+    </xacro:macro>
+
+    <xacro:macro name="oakd_lite_joint" params="x y z roll pitch yaw mount_point" >
+        <joint name="oakd_lite_joint_${mount_point}" type="fixed">
+                <origin rpy="${roll} ${pitch} ${yaw}" xyz="${x}+0.1 ${y}-0.01 ${z}"/>
+            <parent link="base_link" />
+            <child link="oakd_lite_${mount_point}" />
+        </joint>
+
+        <gazebo reference="oakd_lite_joint_${mount_point}">
+            <preserveFixedJoint>true</preserveFixedJoint>
+        </gazebo>
+    </xacro:macro>
+</robot>
